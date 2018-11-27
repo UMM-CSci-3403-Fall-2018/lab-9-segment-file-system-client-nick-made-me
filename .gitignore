@@ -3,6 +3,10 @@
 # Aruba temporary files
 aruba-test/tmp
 
+out/
+
+.idea/
+
 # Package Files #
 *.jar
 *.war
