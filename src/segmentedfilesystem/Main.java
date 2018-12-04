@@ -12,16 +12,24 @@ public class Main {
         DatagramSocket socket;
         final InetAddress address;
         HashMap<Byte, UDPfile> fileMap = new HashMap<Byte, UDPfile>();
+        ArrayList<Byte> fileIDs = new ArrayList<Byte>();
 
         socket = new DatagramSocket();
         address = InetAddress.getByName(args[0]);
 
         initConnection(address, socket);
-        receivePackets(socket, fileMap);
+        receivePackets(socket, fileMap, fileIDs);
+        sortPackets(fileMap, fileIDs);
 
         System.out.println("done with packets, closing socket");
 
         socket.close();
+    }
+
+    public static void sortPackets(HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs) {
+        for(int i = 0; i < fileIDs.size(); i++) {
+            fileMap.get(fileIDs.get(i)).sort();
+        }
     }
 
     public static void initConnection(InetAddress address, DatagramSocket socket) throws IOException {
@@ -53,11 +61,10 @@ public class Main {
         return (fileIDs.size() == 3);
     }
 
-    public static void receivePackets(DatagramSocket socket, HashMap<Byte, UDPfile> fileMap) throws IOException {
+    public static void receivePackets(DatagramSocket socket, HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs ) throws IOException {
         int headerCount = 0;
         int endCount = 0;
         boolean filesDone = false;
-        ArrayList<Byte> fileIDs = new ArrayList<Byte>();
 
         while(!filesDone(fileIDs, fileMap)) {
           //  System.out.println("Im in the loop");
