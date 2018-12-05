@@ -1,6 +1,8 @@
 package segmentedfilesystem;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,9 +23,25 @@ public class Main {
         receivePackets(socket, fileMap, fileIDs);
         sortPackets(fileMap, fileIDs);
 
+        writeFiles(fileIDs, fileMap);
+
         System.out.println("done with packets, closing socket");
 
         socket.close();
+    }
+
+    public static void writeFiles(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap) throws IOException {
+        OutputStream output = null;
+
+        for(int i = 0; i < fileIDs.size(); i++) {
+            output = new FileOutputStream("test" + i + ".txt");
+            for(int j = 0; j < fileMap.get(fileIDs.get(i)).packetData.size(); j++) {
+                output.write(fileMap.get(fileIDs.get(i)).packetData.get(j).getData());
+            }
+        }
+
+        output.flush();
+        output.close();
     }
 
     public static void sortPackets(HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs) {
@@ -62,9 +80,6 @@ public class Main {
     }
 
     public static void receivePackets(DatagramSocket socket, HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs ) throws IOException {
-        int headerCount = 0;
-        int endCount = 0;
-        boolean filesDone = false;
 
         while(!filesDone(fileIDs, fileMap)) {
           //  System.out.println("Im in the loop");
@@ -74,8 +89,6 @@ public class Main {
            // System.out.println("The size of the map is " + fileMap.size());
 
             if (buf[0] % 2 == 0) {
-                //System.out.println("Im in the header if");
-                headerCount++;
                 if(fileMap.get(buf[1]) == null) {
                     fileIDs.add(buf[1]);
                     fileMap.put(buf[1], new UDPfile());
@@ -92,7 +105,6 @@ public class Main {
                         fileMap.put(buf[1], new UDPfile());
                     }
                     fileMap.get(buf[1]).add(packet, false, true, calculateSize(buf[2], buf[3]));
-                    endCount++;
                 } else {
                     if (fileMap.get(buf[1]) == null) {
                         fileIDs.add(buf[1]);
@@ -102,7 +114,5 @@ public class Main {
                 }
             }
         }
-
-
     }
 }
