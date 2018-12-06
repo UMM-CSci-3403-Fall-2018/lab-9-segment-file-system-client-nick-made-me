@@ -12,8 +12,8 @@ public class UDPfile {
     public DatagramPacket headerPacket;
     public ArrayList<DatagramPacket> packetData = new ArrayList<DatagramPacket>();
 
+    // Add packets to the array
     public void add(DatagramPacket packet, boolean isHead, boolean isEnd, int numOfPackets) {
-       // System.out.println("Im in add");
 
         if(isHead) {
             this.hasHead = true;
@@ -27,10 +27,9 @@ public class UDPfile {
         }
 
         this.packetData.add(packet);
-        //System.out.println(this.hasHead + " " + this.hasEnd + " " + this.fileLength + " " + this.isComplete());
-       // System.out.println(packetData.size()+ " " + this.fileLength);
     }
 
+    // Boolean to check if all packets have been received
     public boolean isComplete() {
         if (this.hasHead && this.hasEnd) {
             return (packetData.size() == this.fileLength);
@@ -39,8 +38,17 @@ public class UDPfile {
         }
     }
 
+    // Calculates the filename of the file based off of the header packet
+    public String fileName(DatagramPacket packet) {
+        byte[] data = packet.getData();
+        byte[] filename = new byte[packet.getLength() - 2];
+        for(int i = 2; i < packet.getLength(); i++){
+            filename[i - 2] = data[i];
+        }
+        return new String(filename);
+    }
+
     public int calculateSize(int largeInt, int smallInt) {
-        //System.out.println(largeInt + " " + smallInt);
         if (largeInt < 0) {
             largeInt = largeInt + 256;
         }
@@ -50,10 +58,13 @@ public class UDPfile {
         return largeInt * 256 + smallInt;
     }
 
+    // Sorts the data based off of the comparator below
     public void sort() {
         Collections.sort(packetData, new SortByFileID());
+        packetData.add(headerPacket);
     }
 
+    // Comparator for sorting
     public class SortByFileID implements Comparator<DatagramPacket> {
         public int compare(DatagramPacket a, DatagramPacket b) {
             byte[] byteArrA = a.getData();

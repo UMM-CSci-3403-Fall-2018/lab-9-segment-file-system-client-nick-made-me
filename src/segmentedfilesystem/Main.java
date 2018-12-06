@@ -1,8 +1,8 @@
 package segmentedfilesystem;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,34 +22,12 @@ public class Main {
         initConnection(address, socket);
         receivePackets(socket, fileMap, fileIDs);
         sortPackets(fileMap, fileIDs);
-
         writeFiles(fileIDs, fileMap);
-
-        System.out.println("done with packets, closing socket");
 
         socket.close();
     }
 
-    public static void writeFiles(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap) throws IOException {
-        OutputStream output = null;
-
-        for(int i = 0; i < fileIDs.size(); i++) {
-            output = new FileOutputStream("test" + i + ".txt");
-            for(int j = 0; j < fileMap.get(fileIDs.get(i)).packetData.size(); j++) {
-                output.write(fileMap.get(fileIDs.get(i)).packetData.get(j).getData());
-            }
-        }
-
-        output.flush();
-        output.close();
-    }
-
-    public static void sortPackets(HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs) {
-        for(int i = 0; i < fileIDs.size(); i++) {
-            fileMap.get(fileIDs.get(i)).sort();
-        }
-    }
-
+    // Start connection with server
     public static void initConnection(InetAddress address, DatagramSocket socket) throws IOException {
         byte[] buf = new byte[0];
         DatagramPacket emptyPacket;
@@ -58,6 +36,34 @@ public class Main {
         socket.send(emptyPacket);
     }
 
+    public static void writeFiles(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap) throws IOException {
+
+        // Create necessary files based off of the data in the header packet of each file
+        for(int i = 0; i < fileMap.size(); i++) {
+            DatagramPacket headerPacket = fileMap.get(fileIDs.get(i)).headerPacket;
+            File file = new File(fileMap.get(fileIDs.get(i)).fileName(headerPacket));
+            file.createNewFile();
+        }
+
+        // Write out data to corresponding files
+        for(int i = 0; i < fileIDs.size(); i++) {
+            DatagramPacket headerPacket = fileMap.get(fileIDs.get(i)).headerPacket;
+            FileOutputStream output = new FileOutputStream(fileMap.get(fileIDs.get(i)).fileName(headerPacket));
+            for(int j = 0; j < fileMap.get(fileIDs.get(i)).packetData.size(); j++) {
+                output.write(fileMap.get(fileIDs.get(i)).packetData.get(j).getData());
+            }
+            output.close();
+        }
+    }
+
+    // Sort the packets in each of the files
+    public static void sortPackets(HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs) {
+        for(int i = 0; i < fileIDs.size(); i++) {
+            fileMap.get(fileIDs.get(i)).sort();
+        }
+    }
+
+    // Calculate the size of the packet
     public static int calculateSize(int largeInt, int smallInt) {
         System.out.println(largeInt + " " + smallInt);
         if (largeInt < 0) {
@@ -69,6 +75,7 @@ public class Main {
         return largeInt * 256 + smallInt;
     }
 
+    // Check to see if all of the packets have been received in each file
     public static boolean filesDone(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap) {
         for (int i = 0; i < fileIDs.size(); i++) {
             if(!(fileMap.get(fileIDs.get(i)).isComplete())) {
@@ -79,37 +86,37 @@ public class Main {
         return (fileIDs.size() == 3);
     }
 
+    // Read packets from server and filter them to their corresponding files
     public static void receivePackets(DatagramSocket socket, HashMap<Byte, UDPfile> fileMap, ArrayList<Byte> fileIDs ) throws IOException {
 
         while(!filesDone(fileIDs, fileMap)) {
-          //  System.out.println("Im in the loop");
             byte[] buf = new byte[1028];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive(packet);
-           // System.out.println("The size of the map is " + fileMap.size());
 
             if (buf[0] % 2 == 0) {
                 if(fileMap.get(buf[1]) == null) {
                     fileIDs.add(buf[1]);
                     fileMap.put(buf[1], new UDPfile());
                 }
+
                 fileMap.get(buf[1]).add(packet, true, false, 0);
             }
 
             if(buf[0] % 2 != 0) {
-              //  System.out.println("Im in the data if");
                 if (buf[0] == (3 % 4)) {
-                    System.out.println("Im in the ender if");
                     if(fileMap.get(buf[1]) == null) {
                         fileIDs.add(buf[1]);
                         fileMap.put(buf[1], new UDPfile());
                     }
+
                     fileMap.get(buf[1]).add(packet, false, true, calculateSize(buf[2], buf[3]));
                 } else {
                     if (fileMap.get(buf[1]) == null) {
                         fileIDs.add(buf[1]);
                         fileMap.put(buf[1], new UDPfile());
                     }
+
                     fileMap.get(buf[1]).add(packet, false, false, 0);
                 }
             }
