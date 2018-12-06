@@ -61,7 +61,6 @@ public class UDPfile {
     // Sorts the data based off of the comparator below
     public void sort() {
         Collections.sort(packetData, new SortByFileID());
-       // packetData.add(0, headerPacket);
     }
 
     public byte[] getPacketData(DatagramPacket packet) {
