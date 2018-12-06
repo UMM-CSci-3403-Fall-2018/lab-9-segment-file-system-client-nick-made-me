@@ -37,20 +37,12 @@ public class Main {
     }
 
     public static void writeFiles(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap) throws IOException {
-
-        // Create necessary files based off of the data in the header packet of each file
-        for(int i = 0; i < fileMap.size(); i++) {
-            DatagramPacket headerPacket = fileMap.get(fileIDs.get(i)).headerPacket;
-            File file = new File(fileMap.get(fileIDs.get(i)).fileName(headerPacket));
-            file.createNewFile();
-        }
-
         // Write out data to corresponding files
         for(int i = 0; i < fileIDs.size(); i++) {
-            DatagramPacket headerPacket = fileMap.get(fileIDs.get(i)).headerPacket;
+            DatagramPacket headerPacket = getFileFromMap(fileIDs, fileMap, i).headerPacket;
             FileOutputStream output = new FileOutputStream(fileMap.get(fileIDs.get(i)).fileName(headerPacket));
             for(int j = 0; j < fileMap.get(fileIDs.get(i)).packetData.size(); j++) {
-                output.write(fileMap.get(fileIDs.get(i)).packetData.get(j).getData());
+                output.write(getFileFromMap(fileIDs, fileMap, i).getPacketData(getFileFromMap(fileIDs, fileMap, i).packetData.get(j)));
             }
             output.close();
         }
@@ -63,9 +55,12 @@ public class Main {
         }
     }
 
+    public static UDPfile getFileFromMap(ArrayList<Byte> fileIDs, HashMap<Byte, UDPfile> fileMap, int mapIndex) {
+        return fileMap.get(fileIDs.get(mapIndex));
+    }
+
     // Calculate the size of the packet
     public static int calculateSize(int largeInt, int smallInt) {
-        System.out.println(largeInt + " " + smallInt);
         if (largeInt < 0) {
             largeInt = largeInt + 256;
         }
