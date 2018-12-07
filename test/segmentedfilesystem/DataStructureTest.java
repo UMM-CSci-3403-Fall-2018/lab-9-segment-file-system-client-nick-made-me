@@ -44,9 +44,25 @@ public class DataStructureTest {
     }
 
     @Test
+    public void getFileTest() {
+        byte id = 0;
+        fileIDs.add(id);
+        fileMap.put(id, new UDPfile());
+
+        assertEquals(Main.getFileFromMap(fileIDs, fileMap, 0), fileMap.get(fileIDs.get(0)));
+    }
+
+    @Test
     public void mapTest() throws IOException{
         Main.receivePackets(socket, fileMap, fileIDs);
         assertEquals(fileMap.size(), 3);
         assertEquals(fileIDs.size(), 3);
+    }
+
+    @Test
+    public void filesDoneTest() throws IOException {
+        assertEquals(Main.filesDone(fileIDs, fileMap), false);
+        Main.receivePackets(socket, fileMap, fileIDs);
+        assertEquals(Main.filesDone(fileIDs, fileMap), true);
     }
 }
