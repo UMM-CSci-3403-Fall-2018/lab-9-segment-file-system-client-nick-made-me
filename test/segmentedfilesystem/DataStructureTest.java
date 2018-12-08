@@ -29,7 +29,8 @@ public class DataStructureTest {
         this.fileIDs = new ArrayList<Byte>();
 
         this.socket = new DatagramSocket();
-        address = InetAddress.getByName("heartofgold.morris.umn.edu");
+        // MAKE SURE TO REPLACE WITH A REAL ADDRESS BEFORE TESTING!
+        address = InetAddress.getByName("INSERT_ADDRESS_HERE");
         initConnection(address, socket);
     }
 

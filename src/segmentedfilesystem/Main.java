@@ -44,6 +44,7 @@ public class Main {
             for(int j = 0; j < fileMap.get(fileIDs.get(i)).packetData.size(); j++) {
                 output.write(getFileFromMap(fileIDs, fileMap, i).getPacketData(getFileFromMap(fileIDs, fileMap, i).packetData.get(j)));
             }
+            System.out.println(fileMap.get(fileIDs.get(i)).fileName(headerPacket) + " received");
             output.close();
         }
     }
